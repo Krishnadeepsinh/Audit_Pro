@@ -75,6 +75,7 @@ async function initApp() {
     updateThemeIcon(savedTheme);
 
     // 2. Data Initialization
+    await loadArticles();
     await loadTasks();
 }
 
