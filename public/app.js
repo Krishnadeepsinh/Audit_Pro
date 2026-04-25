@@ -30,9 +30,14 @@ async function attemptLogin() {
         if (res.ok) {
             const data = await res.json();
             window.USER_ROLE = data.role;
+            updateUserProfile(data.username, data.role);
             applyUIRestrictions();
             document.getElementById('auth-wall').classList.add('hidden');
             document.getElementById('auth-password').value = '';
+            
+            // Redirect to dashboard on login to prevent being stuck on a restricted page
+            showPage('dashboard');
+            
             // Reload all data cleanly
             initApp();
         } else {
@@ -46,7 +51,10 @@ async function attemptLogin() {
 async function logout() {
     try {
         await originalFetch('/api/logout', { method: 'POST' });
+        window.USER_ROLE = null;
         document.getElementById('auth-wall').classList.remove('hidden');
+        // Reset to dashboard for next user
+        showPage('dashboard');
     } catch (err) {
         console.error('Logout error:', err);
     }
@@ -84,6 +92,22 @@ const escapeHTML = str => {
         .replace(/'/g, '&#39;');
 };
 
+function updateUserProfile(name, role) {
+    const nameEl = document.getElementById('user-display-name');
+    const roleEl = document.getElementById('user-display-role');
+    const avatarEl = document.getElementById('user-display-avatar');
+
+    if (nameEl) nameEl.innerText = name || 'Anonymous';
+    if (roleEl) {
+        if (role === 'admin') roleEl.innerText = 'Firm Admin';
+        else if (role === 'viewer') roleEl.innerText = 'Guest Viewer';
+        else roleEl.innerText = 'Article Assistant';
+    }
+    if (avatarEl) {
+        avatarEl.innerText = (name || 'A').charAt(0).toUpperCase();
+    }
+}
+
 // Lifecycle Initialization
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
@@ -97,6 +121,7 @@ async function initApp() {
         const meData = await meRes.json();
         if (meData.role) {
             window.USER_ROLE = meData.role;
+            updateUserProfile(meData.username, meData.role);
             applyUIRestrictions();
         } else {
             document.getElementById('auth-wall').classList.remove('hidden');
