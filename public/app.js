@@ -27,6 +27,9 @@ async function attemptLogin() {
         });
         
         if (res.ok) {
+            const data = await res.json();
+            window.USER_ROLE = data.role;
+            applyUIRestrictions();
             document.getElementById('auth-wall').classList.add('hidden');
             document.getElementById('auth-password').value = '';
             // Reload all data cleanly
@@ -51,6 +54,24 @@ async function logout() {
 let allTasks = [];
 let allClients = [];
 let allArticles = [];
+window.USER_ROLE = null;
+
+function applyUIRestrictions() {
+    const role = window.USER_ROLE;
+    
+    // Admin sees everything
+    if (role === 'admin') {
+        document.body.classList.remove('role-article', 'role-viewer');
+        document.body.classList.add('role-admin');
+    } else if (role === 'article') {
+        document.body.classList.remove('role-admin', 'role-viewer');
+        document.body.classList.add('role-article');
+    } else if (role === 'viewer') {
+        document.body.classList.remove('role-admin', 'role-article');
+        document.body.classList.add('role-viewer');
+    }
+}
+
 
 const escapeHTML = str => {
     if (!str) return '';
@@ -69,13 +90,29 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function initApp() {
+    // 0. Ensure role is fetched
+    try {
+        const meRes = await originalFetch('/api/me');
+        const meData = await meRes.json();
+        if (meData.role) {
+            window.USER_ROLE = meData.role;
+            applyUIRestrictions();
+        } else {
+            document.getElementById('auth-wall').classList.remove('hidden');
+        }
+    } catch(e) {
+        document.getElementById('auth-wall').classList.remove('hidden');
+    }
+
     // 1. Theme Initialization
     const savedTheme = localStorage.getItem('auditdesk-theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
     updateThemeIcon(savedTheme);
 
     // 2. Data Initialization
-    await loadArticles();
+    if (window.USER_ROLE !== 'viewer') {
+        await loadArticles();
+    }
     await loadTasks();
 }
 
@@ -452,7 +489,10 @@ function renderDashboardTasks(tasks) {
             </td>
             <td>${escapeHTML(task.task_name)}</td>
             <td>${escapeHTML(task.description || '-')}</td>
-            <td>${escapeHTML(task.assigned_to)}</td>
+            <td>
+                <div>${escapeHTML(task.assigned_to)}</div>
+                <div style="font-size: 10px; color: var(--text-mute); margin-top: 4px; text-transform: uppercase;">By: ${escapeHTML(task.created_by || 'Admin')}</div>
+            </td>
             <td>
                 <div style="font-size: 12px"><b>S:</b> ${formatSimpleDate(task.created_at)}</div>
                 ${task.completion_date ? `<div style="font-size: 12px; color: var(--success)"><b>E:</b> ${formatSimpleDate(task.completion_date)}</div>` : ''}

@@ -46,10 +46,20 @@ async function initDb() {
       remarks TEXT,
       date TEXT NOT NULL,
       completion_date TEXT,
+      created_by TEXT DEFAULT 'Admin',
       FOREIGN KEY (party_id) REFERENCES parties(id) ON DELETE CASCADE,
       FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE
     );
   `);
+  
+  // Migration to add created_by if it doesn't exist
+  try {
+    await db.execute('ALTER TABLE tasks ADD COLUMN created_by TEXT DEFAULT "Admin"');
+    console.log('Migrated tasks table to include created_by');
+  } catch (err) {
+    // Column already exists or other error, typically safe to ignore for migrations if column exists
+  }
+
   console.log('Turso Database schema verified and initialized with Cascade support.');
 }
 

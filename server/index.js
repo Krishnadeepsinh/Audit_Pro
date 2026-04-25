@@ -37,19 +37,26 @@ app.use(express.static('public'));
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
 const APP_PASSWORD = process.env.APP_PASSWORD || 'admin';
-
+const ARTICLE_PASSWORD = process.env.ARTICLE_PASSWORD || 'article';
+const TEST_PASSWORD = process.env.TEST_PASSWORD || 'test';
 // --- AUTH ENDPOINTS ---
 app.post('/api/login', loginLimiter, (req, res) => {
   const { password } = req.body;
-  if (password === APP_PASSWORD) {
-    const token = jwt.sign({ user: 'admin' }, JWT_SECRET, { expiresIn: '7d' });
+  let role = null;
+  
+  if (password === APP_PASSWORD) role = 'admin';
+  else if (password === ARTICLE_PASSWORD) role = 'article';
+  else if (password === TEST_PASSWORD) role = 'viewer';
+
+  if (role) {
+    const token = jwt.sign({ user: 'auth', role: role }, JWT_SECRET, { expiresIn: '7d' });
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
-    res.json({ message: 'Logged in successfully' });
+    res.json({ message: 'Logged in successfully', role: role });
   } else {
     res.status(401).json({ error: 'Invalid password' });
   }
@@ -60,13 +67,25 @@ app.post('/api/logout', (req, res) => {
   res.json({ message: 'Logged out successfully' });
 });
 
+app.get('/api/me', (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.json({ role: null });
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    res.json({ role: decoded.role || 'admin' }); // default for old tokens
+  } catch(e) {
+    res.json({ role: null });
+  }
+});
+
 // Protect all other API routes
 const authMiddleware = (req, res, next) => {
   const token = req.cookies.token;
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
 
   try {
-    jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
     next();
   } catch (err) {
     res.status(401).json({ error: 'Invalid token' });
@@ -87,6 +106,7 @@ app.get('/api/parties', async (req, res) => {
 });
 
 app.post('/api/parties', async (req, res) => {
+  if (req.user.role === 'viewer') return res.status(403).json({ error: 'Read-only access' });
   const { name } = req.body;
   try {
     await db.execute({
@@ -100,6 +120,7 @@ app.post('/api/parties', async (req, res) => {
 });
 
 app.delete('/api/parties/:id', async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
   const id = Number(req.params.id);
   console.log(`[DELETE] Request for Party ID: ${id} (Type: ${typeof id})`);
   try {
@@ -129,6 +150,7 @@ app.delete('/api/parties/:id', async (req, res) => {
 
 // Articles
 app.get('/api/articles', async (req, res) => {
+  if (req.user.role === 'viewer') return res.json([]);
   try {
     const result = await db.execute('SELECT * FROM articles ORDER BY name');
     res.json(result.rows);
@@ -138,6 +160,7 @@ app.get('/api/articles', async (req, res) => {
 });
 
 app.post('/api/articles', async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
   const { name } = req.body;
   try {
     await db.execute({
@@ -151,6 +174,7 @@ app.post('/api/articles', async (req, res) => {
 });
 
 app.delete('/api/articles/:id', async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
   const id = Number(req.params.id);
   console.log(`[DELETE] Request for Article ID: ${id} (Type: ${typeof id})`);
   try {
@@ -183,7 +207,7 @@ app.get('/api/tasks', async (req, res) => {
   try {
     const { party_id, article_id, status } = req.query;
     let query = `
-      SELECT t.*, t.sub_work as task_name, t.date as created_at, t.remarks as description, p.name as client_name, a.name as assigned_to 
+      SELECT t.*, t.sub_work as task_name, t.date as created_at, t.remarks as description, p.name as client_name, a.name as assigned_to, t.created_by
       FROM tasks t
       JOIN parties p ON t.party_id = p.id
       JOIN articles a ON t.article_id = a.id
@@ -204,8 +228,11 @@ app.get('/api/tasks', async (req, res) => {
 });
 
 app.post('/api/tasks', async (req, res) => {
+  if (req.user.role === 'viewer') return res.status(403).json({ error: 'Read-only access' });
   const { client_name, task_name, assigned_to, status, description } = req.body;
   const created_at = new Date().toISOString().split('T')[0];
+  const created_by = req.user.role === 'admin' ? 'Admin' : 'Article';
+
   
   try {
     // 1. Resolve or Create Party
@@ -242,8 +269,8 @@ app.post('/api/tasks', async (req, res) => {
 
     // 3. Insert Task
     await db.execute({
-      sql: 'INSERT INTO tasks (party_id, article_id, sub_work, status, remarks, date) VALUES (?, ?, ?, ?, ?, ?)',
-      args: [party_id, article_id, task_name, status, description, created_at]
+      sql: 'INSERT INTO tasks (party_id, article_id, sub_work, status, remarks, date, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      args: [party_id, article_id, task_name, status, description, created_at, created_by]
     });
 
     res.status(201).json({ message: 'Task created successfully' });
@@ -253,6 +280,7 @@ app.post('/api/tasks', async (req, res) => {
 });
 
 app.patch('/api/tasks/:id', async (req, res) => {
+  if (req.user.role === 'viewer') return res.status(403).json({ error: 'Read-only access' });
   const { status, remarks } = req.body;
   try {
     let query = 'UPDATE tasks SET status = COALESCE(?, status), remarks = COALESCE(?, remarks)';
@@ -274,6 +302,7 @@ app.patch('/api/tasks/:id', async (req, res) => {
 });
 
 app.delete('/api/tasks/:id', async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
   try {
     await db.execute({
       sql: 'DELETE FROM tasks WHERE id = ?',
