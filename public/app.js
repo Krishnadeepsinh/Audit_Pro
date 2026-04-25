@@ -442,8 +442,7 @@ function renderDashboardTasks(tasks) {
     const dashboardBody = document.getElementById('dashboard-tasks-body');
     if (!dashboardBody) return;
 
-    const isStatusFiltered = document.getElementById('dash-status-filter')?.value === 'Completed';
-    const dashboardTasks = isStatusFiltered ? tasks.slice(0, 10) : tasks.filter(t => t.status !== 'Completed').slice(0, 10);
+    const dashboardTasks = tasks.slice(0, 10);
     
     dashboardBody.innerHTML = dashboardTasks.map(task => `
         <tr>
