@@ -45,9 +45,9 @@ app.post('/api/login', loginLimiter, async (req, res) => {
   let role = null;
   let storedUsername = null;
   
-  if (username === 'admin' && password === APP_PASSWORD) {
+  if (username === 'Brijeshwari' && password === APP_PASSWORD) {
     role = 'admin';
-    storedUsername = 'admin';
+    storedUsername = 'Brijeshwari';
   } else if (username === 'test' && password === TEST_PASSWORD) {
     role = 'viewer';
     storedUsername = 'test';
