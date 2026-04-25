@@ -387,6 +387,27 @@
         </div>
     </div>
 
+    <!-- CHANGE PASSWORD MODAL -->
+    <div id="password-modal" class="modal-overlay hidden">
+        <div class="glass-card modal-dialog" style="text-align: left">
+            <h3 class="outfit">Update Credentials</h3>
+            <p style="margin-bottom: 24px; color: var(--text-dim); font-size: 14px;">Define a new secure password for this assistant.</p>
+            
+            <div class="input-group">
+                <label>New Password</label>
+                <input type="text" id="new-password-field" class="premium-input" placeholder="Enter new password..." style="margin-bottom: 32px">
+            </div>
+
+            <div class="modal-actions" style="justify-content: flex-end">
+                <button id="password-modal-cancel" class="nav-btn" style="width: auto; margin-bottom: 0">Cancel</button>
+                <button id="password-modal-submit" class="primary-btn">
+                    <i data-lucide="key"></i>
+                    <span>Save Password</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- AUTHENTICATION WALL -->
     <div id="auth-wall" class="modal-overlay hidden" style="z-index: 9999; background: var(--bg-main);">
         <div class="glass-card modal-dialog" style="text-align: center; max-width: 400px; width: 90%;">

@@ -296,7 +296,7 @@ async function addArticle() {
 }
 
 async function changeArticlePassword(id) {
-    const newPass = prompt("Enter new password for this Assistant:");
+    const newPass = await showPasswordModal();
     if (!newPass || newPass.trim() === "") return;
     
     try {
@@ -457,6 +457,46 @@ function showInputModal(title, message, label, placeholder) {
         fieldEl.placeholder = placeholder;
         fieldEl.value = '';
         
+        modal.classList.remove('hidden');
+        fieldEl.focus();
+
+        const handleSubmit = () => {
+            const val = fieldEl.value.trim();
+            if (val) {
+                cleanup();
+                resolve(val);
+            }
+        };
+
+        const handleCancel = () => {
+            cleanup();
+            resolve(null);
+        };
+
+        const cleanup = () => {
+            modal.classList.add('hidden');
+            submitBtn.removeEventListener('click', handleSubmit);
+            cancelBtn.removeEventListener('click', handleCancel);
+        };
+
+        submitBtn.addEventListener('click', handleSubmit);
+        cancelBtn.addEventListener('click', handleCancel);
+        
+        // Handle Enter key
+        fieldEl.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') handleSubmit();
+        });
+    });
+}
+
+function showPasswordModal() {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('password-modal');
+        const fieldEl = document.getElementById('new-password-field');
+        const submitBtn = document.getElementById('password-modal-submit');
+        const cancelBtn = document.getElementById('password-modal-cancel');
+
+        fieldEl.value = '';
         modal.classList.remove('hidden');
         fieldEl.focus();
 
