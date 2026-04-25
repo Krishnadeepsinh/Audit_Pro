@@ -662,10 +662,16 @@ body.role-viewer #nav-articles,
 body.role-viewer #m-nav-articles,
 body.role-viewer .delete-btn,
 body.role-viewer .action-btn,
-body.role-viewer button[type="submit"],
-body.role-viewer .form-container,
-body.role-viewer select {
+body.role-viewer button[type="submit"] {
     display: none !important;
+}
+
+body.role-viewer .premium-input,
+body.role-viewer select,
+body.role-viewer textarea,
+body.role-viewer input {
+    pointer-events: none !important;
+    cursor: default;
 }
 
 body.role-viewer .form-group input,
