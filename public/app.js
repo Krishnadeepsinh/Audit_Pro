@@ -170,6 +170,7 @@ async function initApp() {
         const meData = await meRes.json();
         if (meData.role) {
             window.USER_ROLE = meData.role;
+            window.USER_NAME = meData.username;
             updateUserProfile(meData.username, meData.role);
             applyUIRestrictions();
         } else {
@@ -412,7 +413,14 @@ async function loadAssignmentDropdowns() {
             const currentVal = articlesSelect.value;
             if (window.USER_ROLE === 'viewer') {
                 articlesSelect.innerHTML = `<option value="" disabled selected>Staff Names Hidden (Demo Mode)</option>`;
+                articlesSelect.disabled = false;
+            } else if (window.USER_ROLE === 'article') {
+                // Articles can only assign to themselves
+                articlesSelect.innerHTML = `<option value="${window.USER_NAME}" selected>${window.USER_NAME}</option>`;
+                articlesSelect.classList.add('premium-input-readonly');
             } else {
+                articlesSelect.disabled = false;
+                articlesSelect.classList.remove('premium-input-readonly');
                 articlesSelect.innerHTML = `<option value="" disabled ${!currentVal ? 'selected' : ''}>Select Team Member</option>` + 
                     articles.map(a => `<option value="${a.name}" ${currentVal === a.name ? 'selected' : ''}>${a.name}</option>`).join('');
             }

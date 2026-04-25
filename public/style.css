@@ -745,3 +745,9 @@ body.role-viewer .form-group select {
     color: var(--text-dim);
     font-size: 13px;
 }
+
+.premium-input-readonly {
+    pointer-events: none !important;
+    background-color: var(--bg-side) !important;
+    opacity: 0.8;
+}
