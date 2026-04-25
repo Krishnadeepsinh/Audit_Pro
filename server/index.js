@@ -36,9 +36,9 @@ app.use(express.static('public'));
 
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
-const APP_PASSWORD = process.env.APP_PASSWORD || 'admin';
-const ARTICLE_PASSWORD = process.env.ARTICLE_PASSWORD || 'article';
-const TEST_PASSWORD = process.env.TEST_PASSWORD || 'test';
+const APP_PASSWORD = process.env.APP_PASSWORD || 'Biju@9825';
+const ARTICLE_PASSWORD = process.env.ARTICLE_PASSWORD || 'Article@123';
+const TEST_PASSWORD = process.env.TEST_PASSWORD || 'Test@123';
 // --- AUTH ENDPOINTS ---
 app.post('/api/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body;
