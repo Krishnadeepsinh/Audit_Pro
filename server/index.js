@@ -1,12 +1,35 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const { db, initDb } = require('./db');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const app = express();
-app.use(cors());
+
+// Security Middlewares
+app.use(helmet({
+  contentSecurityPolicy: false // disabled because lucide CDN is used
+}));
+app.use(cors({ origin: true, credentials: true }));
+
+// Global Rate Limiter for API
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 150,
+  message: { error: 'Too many requests, please try again later' }
+});
+app.use('/api', apiLimiter);
+
+// Specific Brute-Force limit for Login
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { error: 'Too many login attempts. Please try again after 15 minutes.' }
+});
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.static('public'));
@@ -16,14 +39,14 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
 const APP_PASSWORD = process.env.APP_PASSWORD || 'admin';
 
 // --- AUTH ENDPOINTS ---
-app.post('/api/login', (req, res) => {
+app.post('/api/login', loginLimiter, (req, res) => {
   const { password } = req.body;
   if (password === APP_PASSWORD) {
     const token = jwt.sign({ user: 'admin' }, JWT_SECRET, { expiresIn: '7d' });
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
     res.json({ message: 'Logged in successfully' });

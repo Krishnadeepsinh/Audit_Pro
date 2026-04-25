@@ -52,6 +52,16 @@ let allTasks = [];
 let allClients = [];
 let allArticles = [];
 
+const escapeHTML = str => {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+};
+
 // Lifecycle Initialization
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
@@ -155,7 +165,7 @@ function renderClientsGrid(clients) {
                 <i data-lucide="trash-2" style="width: 14px; height: 14px; pointer-events: none;"></i>
             </button>
             <div class="m-avatar"><i data-lucide="building-2"></i></div>
-            <h3 class="outfit">${client.name}</h3>
+            <h3 class="outfit">${escapeHTML(client.name)}</h3>
             <p style="color: var(--text-mute); font-size: 13px">Client Record</p>
         </div>
     `).join('') || `<div style="grid-column: 1/-1; padding: 60px; text-align: center; color: var(--text-mute)">No clients registered in the repository.</div>`;
@@ -172,8 +182,8 @@ function renderArticlesGrid(articles) {
             <button onclick="console.log('Action: deleteArticle', ${art.id}); deleteArticle(${art.id})" class="action-btn" style="position: absolute; top: 12px; right: 12px; color: var(--danger); z-index: 10; cursor: pointer;">
                 <i data-lucide="trash-2" style="width: 14px; height: 14px; pointer-events: none;"></i>
             </button>
-            <div class="m-avatar">${art.name.charAt(0)}</div>
-            <h3 class="outfit">${art.name}</h3>
+            <div class="m-avatar">${escapeHTML(art.name).charAt(0)}</div>
+            <h3 class="outfit">${escapeHTML(art.name)}</h3>
             <p style="color: var(--text-mute); font-size: 13px">Article Assistant</p>
         </div>
     `).join('') || `<div style="grid-column: 1/-1; padding: 60px; text-align: center; color: var(--text-mute)">No staff/articles found.</div>`;
@@ -437,11 +447,11 @@ function renderDashboardTasks(tasks) {
     dashboardBody.innerHTML = dashboardTasks.map(task => `
         <tr>
             <td>
-                <div style="font-weight: 700; color: var(--text-main)">${task.client_name}</div>
-                <div style="font-size: 11px; color: var(--text-mute); text-transform: uppercase; margin-top: 2px">${task.task_name}</div>
+                <div style="font-weight: 700; color: var(--text-main)">${escapeHTML(task.client_name)}</div>
+                <div style="font-size: 11px; color: var(--text-mute); text-transform: uppercase; margin-top: 2px">${escapeHTML(task.task_name)}</div>
             </td>
-            <td>${task.task_name}</td>
-            <td>${task.assigned_to}</td>
+            <td>${escapeHTML(task.task_name)}</td>
+            <td>${escapeHTML(task.assigned_to)}</td>
             <td>
                 <div style="font-size: 12px"><b>S:</b> ${formatSimpleDate(task.created_at)}</div>
                 ${task.completion_date ? `<div style="font-size: 12px; color: var(--success)"><b>E:</b> ${formatSimpleDate(task.completion_date)}</div>` : ''}
@@ -460,12 +470,12 @@ function renderHistoryTasks(tasks) {
     historyBody.innerHTML = tasks.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).map(task => {
         return `
             <tr>
-                <td><div style="font-weight: 600">${task.client_name}</div></td>
-                <td>${task.task_name}</td>
-                <td>${task.assigned_to}</td>
+                <td><div style="font-weight: 600">${escapeHTML(task.client_name)}</div></td>
+                <td>${escapeHTML(task.task_name)}</td>
+                <td>${escapeHTML(task.assigned_to)}</td>
                 <td>${formatSimpleDate(task.created_at)}</td>
                 <td>${task.completion_date ? formatSimpleDate(task.completion_date) : '<span style="color: var(--text-dim)">-</span>'}</td>
-                <td><span class="badge badge-${task.status.toLowerCase()}">${task.status}</span></td>
+                <td><span class="badge badge-${task.status.toLowerCase()}">${escapeHTML(task.status)}</span></td>
                 <td style="text-align: right">
                     <select onchange="updateTaskStatus(${task.id}, this.value)" class="premium-input" style="padding: 6px 12px; font-size: 12px; width: auto">
                         <option value="Pending" ${task.status === 'Pending' ? 'selected' : ''}>Pending</option>
