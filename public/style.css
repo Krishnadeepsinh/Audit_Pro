@@ -318,10 +318,11 @@ main {
     background-color: var(--bg-card);
     border-radius: var(--radius-md);
     border: 1px solid var(--border-main);
-    overflow: hidden;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
-table { width: 100%; border-collapse: collapse; }
+table { width: 100%; border-collapse: collapse; min-width: 850px; }
 th {
     background-color: var(--bg-side);
     padding: 16px 24px;

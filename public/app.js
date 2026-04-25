@@ -451,14 +451,25 @@ function renderDashboardTasks(tasks) {
                 <div style="font-size: 11px; color: var(--text-mute); text-transform: uppercase; margin-top: 2px">${escapeHTML(task.task_name)}</div>
             </td>
             <td>${escapeHTML(task.task_name)}</td>
+            <td>${escapeHTML(task.description || '-')}</td>
             <td>${escapeHTML(task.assigned_to)}</td>
             <td>
                 <div style="font-size: 12px"><b>S:</b> ${formatSimpleDate(task.created_at)}</div>
                 ${task.completion_date ? `<div style="font-size: 12px; color: var(--success)"><b>E:</b> ${formatSimpleDate(task.completion_date)}</div>` : ''}
             </td>
             <td><span class="badge badge-${task.status.toLowerCase()}">${task.status}</span></td>
+            <td style="text-align: right; white-space: nowrap;">
+                <select onchange="updateTaskStatus(${task.id}, this.value)" class="premium-input" style="padding: 6px 12px; font-size: 12px; width: auto; margin-right: 8px;">
+                    <option value="Pending" ${task.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                    <option value="Working" ${task.status === 'Working' ? 'selected' : ''}>Working</option>
+                    <option value="Completed" ${task.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                </select>
+                <button onclick="deleteTask(${task.id})" class="action-btn" style="color: var(--danger); vertical-align: middle;">
+                    <i data-lucide="trash-2" style="width: 14px; height: 14px; pointer-events: none;"></i>
+                </button>
+            </td>
         </tr>
-    `).join('') || `<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--text-mute)">No active assignments found for this filter.</td></tr>`;
+    `).join('') || `<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-mute)">No active assignments found for this filter.</td></tr>`;
 
     if (window.lucide) lucide.createIcons();
 }
@@ -472,20 +483,24 @@ function renderHistoryTasks(tasks) {
             <tr>
                 <td><div style="font-weight: 600">${escapeHTML(task.client_name)}</div></td>
                 <td>${escapeHTML(task.task_name)}</td>
+                <td>${escapeHTML(task.description || '-')}</td>
                 <td>${escapeHTML(task.assigned_to)}</td>
                 <td>${formatSimpleDate(task.created_at)}</td>
                 <td>${task.completion_date ? formatSimpleDate(task.completion_date) : '<span style="color: var(--text-dim)">-</span>'}</td>
                 <td><span class="badge badge-${task.status.toLowerCase()}">${escapeHTML(task.status)}</span></td>
-                <td style="text-align: right">
-                    <select onchange="updateTaskStatus(${task.id}, this.value)" class="premium-input" style="padding: 6px 12px; font-size: 12px; width: auto">
+                <td style="text-align: right; white-space: nowrap;">
+                    <select onchange="updateTaskStatus(${task.id}, this.value)" class="premium-input" style="padding: 6px 12px; font-size: 12px; width: auto; margin-right: 8px;">
                         <option value="Pending" ${task.status === 'Pending' ? 'selected' : ''}>Pending</option>
                         <option value="Working" ${task.status === 'Working' ? 'selected' : ''}>Working</option>
                         <option value="Completed" ${task.status === 'Completed' ? 'selected' : ''}>Completed</option>
                     </select>
+                    <button onclick="deleteTask(${task.id})" class="action-btn" style="color: var(--danger); vertical-align: middle;">
+                        <i data-lucide="trash-2" style="width: 14px; height: 14px; pointer-events: none;"></i>
+                    </button>
                 </td>
             </tr>
         `;
-    }).join('') || `<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-mute)">History archive is empty matching this filter.</td></tr>`;
+    }).join('') || `<tr><td colspan="8" style="text-align: center; padding: 40px; color: var(--text-mute)">History archive is empty matching this filter.</td></tr>`;
 
     if (window.lucide) lucide.createIcons();
 }
@@ -539,6 +554,26 @@ async function updateTaskStatus(id, status) {
         loadTasks();
     } catch (err) {
         console.error('Status update failed:', err);
+    }
+}
+
+async function deleteTask(id) {
+    const confirmed = await showConfirm(
+        'Delete Work Assignment?',
+        'This will permanently delete this task. This action cannot be undone.'
+    );
+    if (!confirmed) return;
+
+    try {
+        const res = await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            loadTasks();
+        } else {
+            const errData = await res.json();
+            alert('Cloud Sync Error: ' + errData.error);
+        }
+    } catch (err) {
+        console.error('Delete network error:', err);
     }
 }
 
