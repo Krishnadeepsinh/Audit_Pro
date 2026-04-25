@@ -60,6 +60,52 @@ async function logout() {
     }
 }
 
+/**
+ * Toast Notification System
+ */
+function showToast(message, type = 'info', title = null) {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const iconMap = {
+        success: 'check-circle',
+        error: 'alert-circle',
+        info: 'info'
+    };
+    
+    if (!title) {
+        title = type.charAt(0).toUpperCase() + type.slice(1);
+        if (type === 'error') title = 'Access Denied / Error';
+    }
+
+    toast.innerHTML = `
+        <div class="toast-icon">
+            <i data-lucide="${iconMap[type] || 'info'}"></i>
+        </div>
+        <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+    `;
+
+    container.appendChild(toast);
+    if (window.lucide) lucide.createIcons();
+
+    // Auto remove after 5s
+    setTimeout(() => {
+        toast.classList.add('removing');
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
+}
+
 let allTasks = [];
 let allClients = [];
 let allArticles = [];
@@ -264,7 +310,7 @@ function renderArticlesGrid(articles) {
 
 async function addClient() {
     if (window.USER_ROLE === 'viewer') {
-        alert("Demo Mode: Adding clients is restricted.");
+        showToast("Demo Mode: Adding clients is restricted.", 'info');
         return;
     }
     const name = await showInputModal(
@@ -399,7 +445,7 @@ async function deleteClient(id) {
         } else {
             const errData = await res.json();
             if (card) card.style.opacity = '1'; // Rollback
-            alert('Cloud Sync Error: ' + errData.error);
+            showToast(errData.error || 'Failed to remove record', 'error', 'Cloud Sync Error');
         }
     } catch (err) {
         console.error('Delete network error:', err);
@@ -668,7 +714,7 @@ function renderHistoryTasks(tasks) {
 async function handleTaskSubmit(e) {
     e.preventDefault();
     if (window.USER_ROLE === 'viewer') {
-        alert("Demo Mode: Assigning work is restricted to staff only.");
+        showToast("Demo Mode: Assigning work is restricted.", 'info', 'Permission Denied');
         return;
     }
     const taskCategory = document.getElementById('task_name').value;
@@ -678,7 +724,7 @@ async function handleTaskSubmit(e) {
     const finalTaskName = taskCategory === 'OTHER' ? otherDetail : taskCategory;
 
     if (!finalTaskName) {
-        alert('Please specify the task or select a category.');
+        showToast('Please specify the task or select a category.', 'error', 'Form Incomplete');
         return;
     }
 
@@ -698,26 +744,39 @@ async function handleTaskSubmit(e) {
         });
 
         if (res.ok) {
+            showToast('Work assigned successfully!', 'success');
             e.target.reset();
             document.getElementById('other-work-container').style.display = 'none';
             showPage('dashboard');
             loadTasks();
+        } else {
+            const err = await res.json();
+            showToast(err.error || 'Failed to sync with cloud', 'error', 'Submission Failed');
         }
     } catch (err) {
         console.error('Submission failed:', err);
+        showToast('Network error during submission', 'error');
     }
 }
 
 async function updateTaskStatus(id, status) {
     try {
-        await fetch(`/api/tasks/${id}`, {
+        const res = await fetch(`/api/tasks/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status })
         });
-        loadTasks();
+        if (res.ok) {
+            showToast(`Status updated to ${status}`, 'success');
+            loadTasks();
+        } else {
+            const err = await res.json();
+            showToast(err.error || 'Failed to update status', 'error');
+            loadTasks(); // Sync UI back
+        }
     } catch (err) {
         console.error('Status update failed:', err);
+        showToast('Network error during sync', 'error');
     }
 }
 
@@ -731,13 +790,15 @@ async function deleteTask(id) {
     try {
         const res = await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
         if (res.ok) {
+            showToast('Assignment deleted', 'success');
             loadTasks();
         } else {
             const errData = await res.json();
-            alert('Cloud Sync Error: ' + errData.error);
+            showToast(errData.error || 'Failed to delete task', 'error', 'Cloud Sync Error');
         }
     } catch (err) {
         console.error('Delete network error:', err);
+        showToast('Network error', 'error');
     }
 }
 
