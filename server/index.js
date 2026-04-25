@@ -40,25 +40,43 @@ const APP_PASSWORD = process.env.APP_PASSWORD || 'admin';
 const ARTICLE_PASSWORD = process.env.ARTICLE_PASSWORD || 'article';
 const TEST_PASSWORD = process.env.TEST_PASSWORD || 'test';
 // --- AUTH ENDPOINTS ---
-app.post('/api/login', loginLimiter, (req, res) => {
-  const { password } = req.body;
+app.post('/api/login', loginLimiter, async (req, res) => {
+  const { username, password } = req.body;
   let role = null;
+  let storedUsername = null;
   
-  if (password === APP_PASSWORD) role = 'admin';
-  else if (password === ARTICLE_PASSWORD) role = 'article';
-  else if (password === TEST_PASSWORD) role = 'viewer';
+  if (username === 'admin' && password === APP_PASSWORD) {
+    role = 'admin';
+    storedUsername = 'admin';
+  } else if (username === 'test' && password === TEST_PASSWORD) {
+    role = 'viewer';
+    storedUsername = 'test';
+  } else {
+    try {
+      const articleCheck = await db.execute({
+        sql: 'SELECT * FROM articles WHERE name = ?',
+        args: [username]
+      });
+      if (articleCheck.rows.length > 0 && articleCheck.rows[0].password === password) {
+        role = 'article';
+        storedUsername = articleCheck.rows[0].name;
+      }
+    } catch(e) {
+      console.error('Login DB check error', e);
+    }
+  }
 
   if (role) {
-    const token = jwt.sign({ user: 'auth', role: role }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ username: storedUsername, role: role }, JWT_SECRET, { expiresIn: '7d' });
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
-    res.json({ message: 'Logged in successfully', role: role });
+    res.json({ message: 'Logged in successfully', role: role, username: storedUsername });
   } else {
-    res.status(401).json({ error: 'Invalid password' });
+    res.status(401).json({ error: 'Invalid credentials' });
   }
 });
 
@@ -72,7 +90,7 @@ app.get('/api/me', (req, res) => {
   if (!token) return res.json({ role: null });
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    res.json({ role: decoded.role || 'admin' }); // default for old tokens
+    res.json({ role: decoded.role || 'admin', username: decoded.username || 'admin' }); 
   } catch(e) {
     res.json({ role: null });
   }
@@ -161,13 +179,34 @@ app.get('/api/articles', async (req, res) => {
 
 app.post('/api/articles', async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
-  const { name } = req.body;
+  const { name, password } = req.body;
   try {
     await db.execute({
-      sql: 'INSERT INTO articles (name) VALUES (?)',
-      args: [name]
+      sql: 'INSERT INTO articles (name, password) VALUES (?, ?)',
+      args: [name, password || 'Article@123']
     });
     res.status(201).json({ message: 'Article added' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.patch('/api/articles/:id', async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
+  const id = Number(req.params.id);
+  const { password } = req.body;
+  if (!password) return res.status(400).json({ error: 'Password required' });
+  
+  try {
+    const update = await db.execute({
+      sql: 'UPDATE articles SET password = ? WHERE id = ?',
+      args: [password, id]
+    });
+    if (update.rowsAffected > 0) {
+      res.json({ message: 'Password updated successfully' });
+    } else {
+      res.status(404).json({ error: 'Article not found' });
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -231,7 +270,7 @@ app.post('/api/tasks', async (req, res) => {
   if (req.user.role === 'viewer') return res.status(403).json({ error: 'Read-only access' });
   const { client_name, task_name, assigned_to, status, description } = req.body;
   const created_at = new Date().toISOString().split('T')[0];
-  const created_by = req.user.role === 'admin' ? 'Admin' : 'Article';
+  const created_by = req.user.role === 'admin' ? 'Admin' : (req.user.username || 'Article');
 
   
   try {
@@ -259,8 +298,8 @@ app.post('/api/tasks', async (req, res) => {
     let article_id;
     if (articleResult.rows.length === 0) {
       const insert = await db.execute({
-        sql: 'INSERT INTO articles (name) VALUES (?) RETURNING id',
-        args: [assigned_to]
+        sql: 'INSERT INTO articles (name, password) VALUES (?, ?) RETURNING id',
+        args: [assigned_to, 'Article@123']
       });
       article_id = insert.rows[0].id;
     } else {

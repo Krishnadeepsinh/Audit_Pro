@@ -373,7 +373,9 @@
             
             <div class="input-group">
                 <label id="input-modal-label">Full Name</label>
-                <input type="text" id="modal-field" class="premium-input" placeholder="e.g. John Doe" style="margin-bottom: 32px">
+                <input type="text" id="modal-field" class="premium-input" placeholder="e.g. John Doe" style="margin-bottom: 16px">
+                <label id="input-modal-password-label" style="display: none; margin-top: 8px;">Password (For Staff)</label>
+                <input type="text" id="modal-password-field" class="premium-input" placeholder="Set temporary password" style="display: none; margin-bottom: 32px">
             </div>
 
             <div class="modal-actions" style="justify-content: flex-end">
@@ -395,7 +397,8 @@
             <p style="color: var(--text-dim); margin-bottom: 24px; font-size: 14px;">Please authenticate to access the directory.</p>
             
             <div class="input-group" style="text-align: left;">
-                <input type="password" id="auth-password" class="premium-input" placeholder="Enter Access Password" style="margin-bottom: 12px;" onkeypress="if(event.key === 'Enter') attemptLogin()">
+                <input type="text" id="auth-username" class="premium-input" placeholder="Enter Username (e.g. admin)" style="margin-bottom: 12px;" onkeypress="if(event.key === 'Enter') document.getElementById('auth-password').focus()">
+                <input type="password" id="auth-password" class="premium-input" placeholder="Enter Password" style="margin-bottom: 12px;" onkeypress="if(event.key === 'Enter') attemptLogin()">
             </div>
             <div id="auth-error" style="color: var(--danger); font-size: 13px; margin-bottom: 16px; display: none; text-align: left;">Invalid password</div>
 

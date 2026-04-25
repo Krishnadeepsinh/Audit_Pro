@@ -32,7 +32,8 @@ async function initDb() {
   await db.execute(`
     CREATE TABLE IF NOT EXISTS articles (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL UNIQUE
+      name TEXT NOT NULL UNIQUE,
+      password TEXT NOT NULL DEFAULT 'Article@123'
     );
   `);
   
@@ -58,6 +59,14 @@ async function initDb() {
     console.log('Migrated tasks table to include created_by');
   } catch (err) {
     // Column already exists or other error, typically safe to ignore for migrations if column exists
+  }
+
+  // Migration to add password to articles if it doesn't exist
+  try {
+    await db.execute('ALTER TABLE articles ADD COLUMN password TEXT NOT NULL DEFAULT "Article@123"');
+    console.log('Migrated articles table to include password');
+  } catch (err) {
+    // Column already exists or other error
   }
 
   console.log('Turso Database schema verified and initialized with Cascade support.');

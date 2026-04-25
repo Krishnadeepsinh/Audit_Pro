@@ -15,6 +15,7 @@ window.fetch = async function(...args) {
 
 // --- AUTH LOGIC ---
 async function attemptLogin() {
+    const username = document.getElementById('auth-username').value.trim();
     const password = document.getElementById('auth-password').value;
     const errorEl = document.getElementById('auth-error');
     errorEl.style.display = 'none';
@@ -23,7 +24,7 @@ async function attemptLogin() {
         const res = await originalFetch('/api/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password })
+            body: JSON.stringify({ username, password })
         });
         
         if (res.ok) {
@@ -222,7 +223,11 @@ function renderArticlesGrid(articles) {
             </button>
             <div class="m-avatar">${escapeHTML(art.name).charAt(0)}</div>
             <h3 class="outfit">${escapeHTML(art.name)}</h3>
-            <p style="color: var(--text-mute); font-size: 13px">Article Assistant</p>
+            <p style="color: var(--text-mute); font-size: 13px">Assistant</p>
+            <div style="font-size: 12px; margin-top: 10px; background: rgba(255,255,255,0.05); padding: 6px; border-radius: 6px;">
+                 <span style="color: var(--text-dim)">Pass:</span> ${escapeHTML(art.password || 'N/A')}
+                 <button onclick="changeArticlePassword(${art.id})" style="background: none; border: none; color: var(--primary); font-size: 11px; margin-left: 8px; cursor: pointer;">Edit</button>
+            </div>
         </div>
     `).join('') || `<div style="grid-column: 1/-1; padding: 60px; text-align: center; color: var(--text-mute)">No staff/articles found.</div>`;
     
@@ -251,23 +256,58 @@ async function addClient() {
 }
 
 async function addArticle() {
+    // Show password field in modal specifically for this
+    const passLabel = document.getElementById('input-modal-password-label');
+    const passInput = document.getElementById('modal-password-field');
+    
+    if (passLabel && passInput) {
+        passLabel.style.display = 'block';
+        passInput.style.display = 'block';
+        passInput.value = '';
+    }
+
     const name = await showInputModal(
         'Add Team Member',
         'Enroll a new article assistant or staff member to the firm.',
-        'Staff Full Name',
+        'Staff Username/Name',
         'e.g. Rahul Sharma'
     );
+    
+    // Hide password field again after modal closes
+    const password = passInput ? (passInput.value.trim() || 'Article@123') : 'Article@123';
+    
+    if (passLabel && passInput) {
+        passLabel.style.display = 'none';
+        passInput.style.display = 'none';
+    }
+
     if (!name) return;
 
     try {
         await fetch('/api/articles', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name })
+            body: JSON.stringify({ name, password })
         });
         loadArticles();
     } catch (err) {
         console.error('Add article failed:', err);
+    }
+}
+
+async function changeArticlePassword(id) {
+    const newPass = prompt("Enter new password for this Assistant:");
+    if (!newPass || newPass.trim() === "") return;
+    
+    try {
+        await fetch(`/api/articles/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: newPass })
+        });
+        loadArticles();
+    } catch (err) {
+        console.error('Failed to update password:', err);
     }
 }
 
