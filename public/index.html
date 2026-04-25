@@ -24,6 +24,13 @@
                 min-width: 100%;
             }
         }
+        /* Viewer Restrictions */
+        .role-viewer #nav-articles,
+        .role-viewer .action-btn[onclick*="delete"],
+        .role-viewer #task-form button[type="submit"],
+        .role-viewer .primary-btn {
+            display: none !important;
+        }
     </style>
 </head>
 <body>

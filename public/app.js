@@ -78,6 +78,9 @@ function applyUIRestrictions() {
     } else if (role === 'viewer') {
         document.body.classList.remove('role-admin', 'role-article');
         document.body.classList.add('role-viewer');
+        // Hide all action buttons and sensitive staff details in demo mode
+        const actionElements = document.querySelectorAll('.primary-btn, .action-btn');
+        // Note: CSS classes handle most of this, but JS ensures dynamic elements are caught
     }
 }
 
@@ -260,6 +263,10 @@ function renderArticlesGrid(articles) {
 }
 
 async function addClient() {
+    if (window.USER_ROLE === 'viewer') {
+        alert("Demo Mode: Adding clients is restricted.");
+        return;
+    }
     const name = await showInputModal(
         'Add New Client',
         'Register a new party or corporation to your audit directory.',
@@ -357,8 +364,12 @@ async function loadAssignmentDropdowns() {
         
         if (articlesSelect) {
             const currentVal = articlesSelect.value;
-            articlesSelect.innerHTML = `<option value="" disabled ${!currentVal ? 'selected' : ''}>Select Team Member</option>` + 
-                articles.map(a => `<option value="${a.name}" ${currentVal === a.name ? 'selected' : ''}>${a.name}</option>`).join('');
+            if (window.USER_ROLE === 'viewer') {
+                articlesSelect.innerHTML = `<option value="" disabled selected>Staff Names Hidden (Demo Mode)</option>`;
+            } else {
+                articlesSelect.innerHTML = `<option value="" disabled ${!currentVal ? 'selected' : ''}>Select Team Member</option>` + 
+                    articles.map(a => `<option value="${a.name}" ${currentVal === a.name ? 'selected' : ''}>${a.name}</option>`).join('');
+            }
         }
     } catch (err) {
         console.error('Failed to load dropdowns:', err);
@@ -604,14 +615,16 @@ function renderDashboardTasks(tasks) {
             </td>
             <td><span class="badge badge-${task.status.toLowerCase()}">${task.status}</span></td>
             <td style="text-align: right; white-space: nowrap;">
-                <select onchange="updateTaskStatus(${task.id}, this.value)" class="premium-input" style="padding: 6px 12px; font-size: 12px; width: auto; margin-right: 8px;">
+                <select onchange="updateTaskStatus(${task.id}, this.value)" ${window.USER_ROLE === 'viewer' ? 'disabled' : ''} class="premium-input" style="padding: 6px 12px; font-size: 12px; width: auto; margin-right: 8px;">
                     <option value="Pending" ${task.status === 'Pending' ? 'selected' : ''}>Pending</option>
                     <option value="Working" ${task.status === 'Working' ? 'selected' : ''}>Working</option>
                     <option value="Completed" ${task.status === 'Completed' ? 'selected' : ''}>Completed</option>
                 </select>
+                ${window.USER_ROLE !== 'viewer' ? `
                 <button onclick="deleteTask(${task.id})" class="action-btn" style="color: var(--danger); vertical-align: middle;">
                     <i data-lucide="trash-2" style="width: 14px; height: 14px; pointer-events: none;"></i>
                 </button>
+                ` : ''}
             </td>
         </tr>
     `).join('') || `<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-mute)">No active assignments found for this filter.</td></tr>`;
@@ -634,14 +647,16 @@ function renderHistoryTasks(tasks) {
                 <td>${task.completion_date ? formatSimpleDate(task.completion_date) : '<span style="color: var(--text-dim)">-</span>'}</td>
                 <td><span class="badge badge-${task.status.toLowerCase()}">${escapeHTML(task.status)}</span></td>
                 <td style="text-align: right; white-space: nowrap;">
-                    <select onchange="updateTaskStatus(${task.id}, this.value)" class="premium-input" style="padding: 6px 12px; font-size: 12px; width: auto; margin-right: 8px;">
+                    <select onchange="updateTaskStatus(${task.id}, this.value)" ${window.USER_ROLE === 'viewer' ? 'disabled' : ''} class="premium-input" style="padding: 6px 12px; font-size: 12px; width: auto; margin-right: 8px;">
                         <option value="Pending" ${task.status === 'Pending' ? 'selected' : ''}>Pending</option>
                         <option value="Working" ${task.status === 'Working' ? 'selected' : ''}>Working</option>
                         <option value="Completed" ${task.status === 'Completed' ? 'selected' : ''}>Completed</option>
                     </select>
+                    ${window.USER_ROLE !== 'viewer' ? `
                     <button onclick="deleteTask(${task.id})" class="action-btn" style="color: var(--danger); vertical-align: middle;">
                         <i data-lucide="trash-2" style="width: 14px; height: 14px; pointer-events: none;"></i>
                     </button>
+                    ` : ''}
                 </td>
             </tr>
         `;
@@ -652,6 +667,10 @@ function renderHistoryTasks(tasks) {
 
 async function handleTaskSubmit(e) {
     e.preventDefault();
+    if (window.USER_ROLE === 'viewer') {
+        alert("Demo Mode: Assigning work is restricted to staff only.");
+        return;
+    }
     const taskCategory = document.getElementById('task_name').value;
     const otherDetail = document.getElementById('other_task_name').value;
     
