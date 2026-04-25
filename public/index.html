@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuditDesk Pro | Premium CA Work Management</title>
+    <!-- Fonts -->
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .filter-bar .input-group {
+            flex: 1;
+            min-width: 200px;
+            margin-bottom: 0 !important;
+        }
+        @media (max-width: 600px) {
+            .filter-bar .input-group {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-icon">
+                    <i data-lucide="shield-check"></i>
+                </div>
+                <div class="brand-text">
+                    <div class="brand-name outfit">AuditDesk <span style="color: var(--primary)">Pro</span></div>
+                    <div class="brand-tag">Governance System</div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <p class="nav-section-title">Core Operations</p>
+                    <button onclick="showPage('dashboard')" class="nav-btn active" id="nav-dashboard">
+                        <i data-lucide="layout-dashboard"></i>
+                        <span>Dashboard</span>
+                    </button>
+                    <button onclick="showPage('assign')" class="nav-btn" id="nav-assign">
+                        <i data-lucide="plus-circle"></i>
+                        <span>Assign Work</span>
+                    </button>
+                    <button onclick="showPage('history')" class="nav-btn" id="nav-history">
+                        <i data-lucide="list-checks"></i>
+                        <span>Work History</span>
+                    </button>
+                </div>
+
+                <div class="nav-section" style="margin-top: 32px">
+                    <p class="nav-section-title">Directories</p>
+                    <button onclick="showPage('clients')" class="nav-btn" id="nav-clients">
+                        <i data-lucide="building"></i>
+                        <span>Clients / Parties</span>
+                    </button>
+                    <button onclick="showPage('articles')" class="nav-btn" id="nav-articles">
+                        <i data-lucide="users"></i>
+                        <span>Articles / Assistants</span>
+                    </button>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar">CA</div>
+                    <div class="user-info">
+                        <h4 class="outfit">Brijeshwariba</h4>
+                        <p>Firm Admin</p>
+                    </div>
+                </div>
+                <button onclick="logout()" class="nav-btn" style="margin-top: 16px; margin-bottom: 0; color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2);">
+                    <i data-lucide="log-out"></i>
+                    <span>Sign Out</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main>
+            <!-- TOP BAR -->
+            <header class="top-bar">
+                <div class="page-title">
+                    <p id="current-date" class="brand-tag" style="margin-bottom: 4px"></p>
+                    <h1 id="page-header-title">Dashboard Overview</h1>
+                </div>
+                <div class="header-actions">
+                    <button onclick="toggleTheme()" class="theme-toggle" title="Toggle Theme">
+                        <i data-lucide="moon" id="theme-icon"></i>
+                    </button>
+                    <button class="theme-toggle" style="position: relative">
+                        <i data-lucide="bell"></i>
+                        <span style="position: absolute; top: 10px; right: 10px; width: 8px; height: 8px; background: var(--danger); border-radius: 50%; border: 2px solid var(--bg-side)"></span>
+                    </button>
+                    <button onclick="showPage('assign')" class="primary-btn">
+                        <i data-lucide="plus"></i>
+                        <span>New Assignment</span>
+                    </button>
+                </div>
+            </header>
+
+            <div id="content-area">
+                <!-- DASHBOARD PAGE -->
+                <div id="dashboard-page" class="page">
+                    <div class="stat-grid">
+                        <div class="glass-card stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">Total Records</span>
+                                <div class="icon-box" style="color: var(--primary)"><i data-lucide="archive"></i></div>
+                            </div>
+                            <div class="stat-value outfit" id="stat-total">0</div>
+                        </div>
+                        <div class="glass-card stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">Pending Sync</span>
+                                <div class="icon-box" style="color: var(--warning)"><i data-lucide="clock"></i></div>
+                            </div>
+                            <div class="stat-value outfit" id="stat-pending">0</div>
+                        </div>
+                        <div class="glass-card stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">Actively Working</span>
+                                <div class="icon-box" style="color: var(--info)"><i data-lucide="activity"></i></div>
+                            </div>
+                            <div class="stat-value outfit" id="stat-working">0</div>
+                        </div>
+                        <div class="glass-card stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">Successfully Audited</span>
+                                <div class="icon-box" style="color: var(--success)"><i data-lucide="check-circle-2"></i></div>
+                            </div>
+                            <div class="stat-value outfit" id="stat-completed">0</div>
+                        </div>
+                    </div>
+
+                    <div class="content-section">
+                        <div class="section-header">
+                            <h2 class="outfit">Assigned Activity</h2>
+                        </div>
+                        <div class="table-wrapper">
+                            <!-- Dashboard Filters -->
+                            <div class="filter-bar" style="padding: 10px 0;">
+                                <div class="input-group" style="flex: 2">
+                                    <input type="text" id="dash-search" oninput="applyFilters('dashboard')" class="premium-input" placeholder="🔍 Search Audit Client or Task...">
+                                </div>
+                                <div class="input-group">
+                                    <select id="dash-status-filter" onchange="applyFilters('dashboard')" class="premium-input">
+                                        <option value="">All Statuses</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="Working">Working</option>
+                                        <option value="Completed">Completed</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <select id="dash-staff-filter" onchange="applyFilters('dashboard')" class="premium-input">
+                                        <option value="">All Staff</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <table id="recent-tasks-table">
+                                <thead>
+                                    <tr>
+                                        <th>Audit Client</th>
+                                        <th>Work Item</th>
+                                        <th>Team Member</th>
+                                        <th>Timeline</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashboard-tasks-body">
+                                    <!-- Dynamic -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ASSIGN WORK PAGE -->
+                <div id="assign-page" class="page hidden">
+                    <div class="glass-card form-container">
+                        <h2 class="outfit" style="margin-bottom: 8px">New Work Assignment</h2>
+                        <p style="color: var(--text-dim); margin-bottom: 40px; font-size: 14px">Fill in the details to record and track a new audit task.</p>
+                        
+                        <form id="task-form">
+                            <div class="form-grid">
+                                <div class="input-group">
+                                    <label>Client Name</label>
+                                    <input type="text" id="client_name" list="clients-list" class="premium-input" placeholder="e.g. ABC Ltd" required>
+                                    <datalist id="clients-list"></datalist>
+                                </div>
+                                <div class="input-group">
+                                    <label>Task Category</label>
+                                    <select id="task_name" class="premium-input" onchange="toggleOtherWork(this.value)" required>
+                                        <option value="">Select Audit Action...</option>
+                                        <option value="Ledger Scrutiny">Ledger Scrutiny</option>
+                                        <option value="TDS Match">TDS Match</option>
+                                        <option value="Opening Trial Balance">Opening Trial Balance</option>
+                                        <option value="Black Horse Finding">Black Horse Finding</option>
+                                        <option value="3CD Finding">3CD Finding</option>
+                                        <option value="Black Horse Update">Black Horse Update</option>
+                                        <option value="3CD Update">3CD Update</option>
+                                        <option value="26AS">26AS</option>
+                                        <option value="Strike Off">Strike Off</option>
+                                        <option value="OTHER">Other...</option>
+                                    </select>
+                                </div>
+                                <div class="input-group" id="other-work-container" style="display: none;">
+                                    <label>Enter Custom Work</label>
+                                    <input type="text" id="other_task_name" class="premium-input" placeholder="Specify custom audit work...">
+                                </div>
+                                <div class="input-group">
+                                    <label>Assigned To</label>
+                                    <select id="assigned_to" required>
+                                        <option value="" disabled selected>Select Team Member</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label>Initial Status</label>
+                                    <select id="status">
+                                        <option value="Pending">Pending</option>
+                                        <option value="Working">Working</option>
+                                    </select>
+                                </div>
+                                <div class="input-group form-full">
+                                    <label>Work Description / Notes</label>
+                                    <textarea id="description" rows="4" placeholder="Specific instructions for the article..."></textarea>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: flex-end; gap: 16px">
+                                <button type="button" onclick="showPage('dashboard')" class="nav-btn" style="width: auto; margin-bottom: 0">Cancel</button>
+                                <button type="submit" class="primary-btn">
+                                    <i data-lucide="save"></i>
+                                    <span>Create Assignment</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- WORK HISTORY PAGE -->
+                <div id="history-page" class="page hidden">
+                        <div class="section-header">
+                            <div>
+                                <h2 class="outfit">Master Audit Trail</h2>
+                                <p style="color: var(--text-dim); font-size: 13px; margin-top: 4px">Comprehensive record of all assigned and completed work.</p>
+                            </div>
+                        </div>
+
+                        <!-- History Filters -->
+                        <div class="filter-bar" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px;">
+                            <div class="input-group" style="flex: 2">
+                                <input type="text" id="hist-search" oninput="applyFilters('history')" class="premium-input" placeholder="Search master history...">
+                            </div>
+                            <div class="input-group">
+                                <select id="hist-staff-filter" onchange="applyFilters('history')" class="premium-input">
+                                    <option value="">All Staff</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <select id="hist-status-filter" onchange="applyFilters('history')" class="premium-input">
+                                    <option value="">All Statuses</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Working">Working</option>
+                                    <option value="Completed">Completed</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Audit Client</th>
+                                        <th>Work Item</th>
+                                        <th>Team Member</th>
+                                        <th>Date Assigned</th>
+                                        <th>Finished On</th>
+                                        <th>Current Status</th>
+                                        <th style="text-align: right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="history-tasks-body">
+                                    <!-- Dynamic -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                <!-- CLIENTS PAGE -->
+                <div id="clients-page" class="page hidden">
+                    <div class="section-header">
+                        <h2 class="outfit">Client Repository</h2>
+                        <div style="flex: 1; margin: 0 40px;">
+                            <input type="text" id="client-search" oninput="applyFilters('clients')" class="premium-input" style="padding: 10px 20px" placeholder="🔍 Search clients...">
+                        </div>
+                        <button onclick="addClient()" class="primary-btn"><i data-lucide="plus"></i> <span>Add Client</span></button>
+                    </div>
+                    <div class="management-grid" id="clients-grid"></div>
+                </div>
+
+                <!-- ARTICLES PAGE -->
+                <div id="articles-page" class="page hidden">
+                    <div class="section-header">
+                        <h2 class="outfit">Articles & Staff</h2>
+                        <div style="flex: 1; margin: 0 40px;">
+                            <input type="text" id="staff-search" oninput="applyFilters('staff')" class="premium-input" style="padding: 10px 20px" placeholder="🔍 Search staff...">
+                        </div>
+                        <button onclick="addArticle()" class="primary-btn"><i data-lucide="plus"></i> <span>Add Assistant</span></button>
+                    </div>
+                    <div class="management-grid" id="articles-grid"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MOBILE BOTTOM NAVIGATION -->
+    <nav class="bottom-nav">
+        <button class="nav-btn-mobile active" id="m-nav-dashboard" onclick="showPage('dashboard')">
+            <i data-lucide="layout-dashboard"></i>
+            <span>Home</span>
+        </button>
+        <button class="nav-btn-mobile" id="m-nav-assign" onclick="showPage('assign')">
+            <i data-lucide="plus-circle"></i>
+            <span>Assign</span>
+        </button>
+        <button class="nav-btn-mobile" id="m-nav-history" onclick="showPage('history')">
+            <i data-lucide="history"></i>
+            <span>Archive</span>
+        </button>
+        <button class="nav-btn-mobile" id="m-nav-clients" onclick="showPage('clients')">
+            <i data-lucide="building"></i>
+            <span>Clients</span>
+        </button>
+        <button class="nav-btn-mobile" id="m-nav-articles" onclick="showPage('articles')">
+            <i data-lucide="users"></i>
+            <span>Staff</span>
+        </button>
+    </nav>
+
+    <!-- CONFIRMATION MODAL -->
+    <div id="confirm-modal" class="modal-overlay hidden">
+        <div class="glass-card modal-dialog">
+            <div class="modal-icon"><i data-lucide="alert-triangle"></i></div>
+            <h3 class="outfit" id="modal-title">Confirm Action</h3>
+            <p id="modal-message">Are you sure you want to proceed with this deletion?</p>
+            <div class="modal-actions">
+                <button id="modal-cancel" class="nav-btn" style="width: auto; margin-bottom: 0">Cancel</button>
+                <button id="modal-confirm" class="primary-btn" style="background-color: var(--danger)">
+                    <span>Confirm Delete</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOM INPUT MODAL -->
+    <div id="input-modal" class="modal-overlay hidden">
+        <div class="glass-card modal-dialog" style="text-align: left">
+            <h3 class="outfit" id="input-modal-title">Registration</h3>
+            <p id="input-modal-message" style="margin-bottom: 24px">Please enter the details below.</p>
+            
+            <div class="input-group">
+                <label id="input-modal-label">Full Name</label>
+                <input type="text" id="modal-field" class="premium-input" placeholder="e.g. John Doe" style="margin-bottom: 32px">
+            </div>
+
+            <div class="modal-actions" style="justify-content: flex-end">
+                <button id="input-modal-cancel" class="nav-btn" style="width: auto; margin-bottom: 0">Cancel</button>
+                <button id="input-modal-submit" class="primary-btn">
+                    <span>Register Now</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUTHENTICATION WALL -->
+    <div id="auth-wall" class="modal-overlay hidden" style="z-index: 9999; background: var(--bg-main);">
+        <div class="glass-card modal-dialog" style="text-align: center; max-width: 400px; width: 90%;">
+            <div class="brand-icon" style="margin: 0 auto 20px; width: 48px; height: 48px; background: rgba(59, 130, 246, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                <i data-lucide="shield-check" style="width: 24px; height: 24px;"></i>
+            </div>
+            <h2 class="outfit" style="margin-bottom: 8px;">AuditDesk <span style="color: var(--primary)">Pro</span></h2>
+            <p style="color: var(--text-dim); margin-bottom: 24px; font-size: 14px;">Please authenticate to access the directory.</p>
+            
+            <div class="input-group" style="text-align: left;">
+                <input type="password" id="auth-password" class="premium-input" placeholder="Enter Access Password" style="margin-bottom: 12px;" onkeypress="if(event.key === 'Enter') attemptLogin()">
+            </div>
+            <div id="auth-error" style="color: var(--danger); font-size: 13px; margin-bottom: 16px; display: none; text-align: left;">Invalid password</div>
+
+            <button onclick="attemptLogin()" class="primary-btn" style="width: 100%; justify-content: center;">
+                <i data-lucide="lock"></i>
+                <span>Unlock System</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+    <script>
+        // Set current date
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', options).toUpperCase();
+        
+        // Final init
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

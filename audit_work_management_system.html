@@ -1,0 +1,412 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--sidebar-w:200px}
+body{font-family:var(--font-sans);font-size:14px;color:var(--color-text-primary)}
+.app{display:flex;height:100vh;min-height:600px;background:var(--color-background-tertiary)}
+.sidebar{width:var(--sidebar-w);background:var(--color-background-primary);border-right:0.5px solid var(--color-border-tertiary);display:flex;flex-direction:column;padding:0}
+.logo{padding:16px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.logo-title{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+.logo-sub{font-size:11px;color:var(--color-text-tertiary);margin-top:2px}
+.nav{padding:8px;flex:1}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--border-radius-md);cursor:pointer;font-size:13px;color:var(--color-text-secondary);margin-bottom:2px;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:var(--color-background-secondary);color:var(--color-text-primary)}
+.nav-item.active{background:var(--color-background-secondary);color:var(--color-text-primary);font-weight:500}
+.nav-icon{width:16px;height:16px;opacity:0.7}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{padding:12px 20px;background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:space-between}
+.page-title{font-size:15px;font-weight:500}
+.theme-btn{padding:5px 10px;font-size:12px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:none;color:var(--color-text-secondary);cursor:pointer}
+.content{flex:1;overflow-y:auto;padding:20px}
+.page{display:none}
+.page.active{display:block}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:14px 16px}
+.stat-label{font-size:12px;color:var(--color-text-secondary);margin-bottom:4px}
+.stat-val{font-size:22px;font-weight:500}
+.stat-val.pending{color:#BA7517}
+.stat-val.inprogress{color:#185FA5}
+.stat-val.done{color:#3B6D11}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:16px;margin-bottom:16px}
+.card-title{font-size:13px;font-weight:500;margin-bottom:12px;color:var(--color-text-secondary)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group.full{grid-column:1/-1}
+label{font-size:12px;color:var(--color-text-secondary)}
+input,select,textarea{width:100%;padding:7px 10px;font-size:13px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);font-family:var(--font-sans)}
+textarea{resize:vertical;min-height:60px}
+.btn{padding:7px 16px;font-size:13px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);cursor:pointer;background:none;color:var(--color-text-primary);font-family:var(--font-sans)}
+.btn-primary{background:var(--color-text-primary);color:var(--color-background-primary);border-color:var(--color-text-primary)}
+.btn-sm{padding:4px 10px;font-size:12px}
+.filter-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.table-wrap{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 14px;font-size:11px;font-weight:500;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary)}
+td{padding:10px 14px;border-bottom:0.5px solid var(--color-border-tertiary);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--color-background-secondary)}
+.badge{display:inline-block;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.badge-pending{background:#FAEEDA;color:#854F0B}
+.badge-inprogress{background:#E6F1FB;color:#185FA5}
+.badge-done{background:#EAF3DE;color:#3B6D11}
+.inline-edit{display:none;align-items:center;gap:6px}
+.inline-edit.show{display:flex}
+.edit-actions{display:flex;gap:6px}
+.pill-list{display:flex;flex-direction:column;gap:8px}
+.pill-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);font-size:13px}
+.empty{text-align:center;padding:40px;color:var(--color-text-tertiary);font-size:13px}
+.success-msg{padding:8px 12px;background:#EAF3DE;color:#3B6D11;border-radius:var(--border-radius-md);font-size:12px;margin-bottom:12px;display:none}
+</style>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-title">AuditDesk</div>
+      <div class="logo-sub">Work Management</div>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" onclick="goto('dashboard',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-item" onclick="goto('tasks',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h8"/></svg>
+        Tasks
+      </button>
+      <button class="nav-item" onclick="goto('addtask',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/></svg>
+        Add Task
+      </button>
+      <button class="nav-item" onclick="goto('parties',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 13c0-3 2-4 4-4h4c2 0 4 1 4 4"/><circle cx="8" cy="5" r="3"/></svg>
+        Parties
+      </button>
+      <button class="nav-item" onclick="goto('articles',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-2.5 2-3.5 5-3.5"/><circle cx="12" cy="7" r="2"/><path d="M10 13c0-1.5 1-2.5 3-2.5h1"/></svg>
+        Articles
+      </button>
+    </nav>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="page-title" id="ptitle">Dashboard</span>
+      <button class="theme-btn" onclick="toggleTheme()">Toggle theme</button>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="p-dashboard">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-label">Total tasks</div><div class="stat-val" id="s-total">0</div></div>
+          <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-val pending" id="s-pending">0</div></div>
+          <div class="stat-card"><div class="stat-label">In progress</div><div class="stat-val inprogress" id="s-inprog">0</div></div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-val done" id="s-done">0</div></div>
+          <div class="stat-card"><div class="stat-label">Parties</div><div class="stat-val" id="s-parties">0</div></div>
+          <div class="stat-card"><div class="stat-label">Articles</div><div class="stat-val" id="s-articles">0</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Recent tasks</div>
+          <div id="recent-tasks"><div class="empty">No tasks yet. Add your first task.</div></div>
+        </div>
+      </div>
+
+      <!-- TASKS -->
+      <div class="page" id="p-tasks">
+        <div class="filter-bar">
+          <select id="f-party" onchange="renderTasks()"><option value="">All parties</option></select>
+          <select id="f-article" onchange="renderTasks()"><option value="">All articles</option></select>
+          <select id="f-subwork" onchange="renderTasks()">
+            <option value="">All sub work</option>
+            <option>Ledger Scrutiny</option><option>TDS Match</option><option>Opening Trial Balance</option>
+            <option>Black Horse Finding</option><option>3CD Finding</option><option>Black Horse Update</option>
+            <option>3CD Update</option><option>26AS</option><option>Strike Off</option><option>Other</option>
+          </select>
+          <select id="f-status" onchange="renderTasks()">
+            <option value="">All statuses</option>
+            <option>Pending</option><option>In Progress</option><option>Completed</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Party</th><th>Sub work</th><th>Article</th><th>Status</th><th>Remarks</th><th>Date</th><th></th></tr></thead>
+            <tbody id="task-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ADD TASK -->
+      <div class="page" id="p-addtask">
+        <div class="card">
+          <div class="card-title">New task</div>
+          <div class="success-msg" id="task-msg">Task saved successfully.</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Party</label>
+              <select id="t-party"><option value="">Select party</option></select>
+            </div>
+            <div class="form-group">
+              <label>Article</label>
+              <select id="t-article"><option value="">Select article</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Sub work</label>
+              <select id="t-subwork" onchange="toggleOther(this,'t-other-wrap')">
+                <option value="">Select sub work</option>
+                <option>Ledger Scrutiny</option><option>TDS Match</option><option>Opening Trial Balance</option>
+                <option>Black Horse Finding</option><option>3CD Finding</option><option>Black Horse Update</option>
+                <option>3CD Update</option><option>26AS</option><option>Strike Off</option><option>Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="t-status">
+                <option>Pending</option><option>In Progress</option><option>Completed</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row" id="t-other-wrap" style="display:none">
+            <div class="form-group full">
+              <label>Custom work description</label>
+              <input type="text" id="t-other" placeholder="Enter custom work">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group full">
+              <label>Remarks</label>
+              <textarea id="t-remarks" placeholder="Optional remarks..."></textarea>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="saveTask()">Save task</button>
+        </div>
+      </div>
+
+      <!-- PARTIES -->
+      <div class="page" id="p-parties">
+        <div class="card" style="max-width:400px">
+          <div class="card-title">Add party</div>
+          <div class="success-msg" id="party-msg">Party added.</div>
+          <div class="form-group" style="margin-bottom:12px">
+            <label>Party name</label>
+            <input type="text" id="party-input" placeholder="e.g. XYZ Ltd">
+          </div>
+          <button class="btn btn-primary" onclick="saveParty()">Save party</button>
+        </div>
+        <div class="card">
+          <div class="card-title">Parties</div>
+          <div class="pill-list" id="party-list"><div class="empty">No parties added yet.</div></div>
+        </div>
+      </div>
+
+      <!-- ARTICLES -->
+      <div class="page" id="p-articles">
+        <div class="card" style="max-width:400px">
+          <div class="card-title">Add article</div>
+          <div class="success-msg" id="article-msg">Article added.</div>
+          <div class="form-group" style="margin-bottom:12px">
+            <label>Article name</label>
+            <input type="text" id="article-input" placeholder="e.g. Rahul">
+          </div>
+          <button class="btn btn-primary" onclick="saveArticle()">Save article</button>
+        </div>
+        <div class="card">
+          <div class="card-title">Articles</div>
+          <div class="pill-list" id="article-list"><div class="empty">No articles added yet.</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+let parties=[],articles=[],tasks=[];
+let editingRow=null;
+
+function goto(page,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('p-'+page).classList.add('active');
+  if(btn)btn.classList.add('active');
+  const titles={dashboard:'Dashboard',tasks:'Task list',addtask:'Add task',parties:'Parties',articles:'Articles'};
+  document.getElementById('ptitle').textContent=titles[page]||'';
+  if(page==='dashboard')updateDash();
+  if(page==='tasks')renderTasks();
+  if(page==='addtask')populateTaskDropdowns();
+}
+
+function populateTaskDropdowns(){
+  const ps=document.getElementById('t-party');
+  const pa=document.getElementById('t-article');
+  ps.innerHTML='<option value="">Select party</option>'+parties.map(p=>`<option>${p}</option>`).join('');
+  pa.innerHTML='<option value="">Select article</option>'+articles.map(a=>`<option>${a}</option>`).join('');
+  populateFilterDropdowns();
+}
+
+function populateFilterDropdowns(){
+  const fp=document.getElementById('f-party');
+  const fa=document.getElementById('f-article');
+  const cv_p=fp.value,cv_a=fa.value;
+  fp.innerHTML='<option value="">All parties</option>'+parties.map(p=>`<option>${p}</option>`).join('');
+  fa.innerHTML='<option value="">All articles</option>'+articles.map(a=>`<option>${a}</option>`).join('');
+  fp.value=cv_p;fa.value=cv_a;
+}
+
+function toggleOther(sel,wrapId){
+  document.getElementById(wrapId).style.display=sel.value==='Other'?'grid':'none';
+}
+
+function saveParty(){
+  const v=document.getElementById('party-input').value.trim();
+  if(!v)return;
+  parties.push(v);
+  document.getElementById('party-input').value='';
+  showMsg('party-msg');
+  renderParties();
+  updateDash();
+}
+
+function saveArticle(){
+  const v=document.getElementById('article-input').value.trim();
+  if(!v)return;
+  articles.push(v);
+  document.getElementById('article-input').value='';
+  showMsg('article-msg');
+  renderArticles();
+  updateDash();
+}
+
+function saveTask(){
+  const party=document.getElementById('t-party').value;
+  const article=document.getElementById('t-article').value;
+  let subwork=document.getElementById('t-subwork').value;
+  if(subwork==='Other')subwork=document.getElementById('t-other').value.trim()||'Other';
+  const status=document.getElementById('t-status').value;
+  const remarks=document.getElementById('t-remarks').value.trim();
+  if(!party||!article||!subwork)return;
+  tasks.push({party,article,subwork,status,remarks,date:new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'})});
+  document.getElementById('t-subwork').value='';
+  document.getElementById('t-other').value='';
+  document.getElementById('t-other-wrap').style.display='none';
+  document.getElementById('t-remarks').value='';
+  showMsg('task-msg');
+  updateDash();
+}
+
+function renderParties(){
+  const el=document.getElementById('party-list');
+  if(!parties.length){el.innerHTML='<div class="empty">No parties added yet.</div>';return;}
+  el.innerHTML=parties.map((p,i)=>`<div class="pill-item"><span>${p}</span><button class="btn btn-sm" onclick="removeParty(${i})">Remove</button></div>`).join('');
+}
+
+function renderArticles(){
+  const el=document.getElementById('article-list');
+  if(!articles.length){el.innerHTML='<div class="empty">No articles added yet.</div>';return;}
+  el.innerHTML=articles.map((a,i)=>`<div class="pill-item"><span>${a}</span><button class="btn btn-sm" onclick="removeArticle(${i})">Remove</button></div>`).join('');
+}
+
+function removeParty(i){parties.splice(i,1);renderParties();updateDash();}
+function removeArticle(i){articles.splice(i,1);renderArticles();updateDash();}
+
+function statusBadge(s){
+  if(s==='Pending')return'<span class="badge badge-pending">Pending</span>';
+  if(s==='In Progress')return'<span class="badge badge-inprogress">In Progress</span>';
+  return'<span class="badge badge-done">Completed</span>';
+}
+
+function renderTasks(){
+  const fp=document.getElementById('f-party').value;
+  const fa=document.getElementById('f-article').value;
+  const fw=document.getElementById('f-subwork').value;
+  const fs=document.getElementById('f-status').value;
+  let filtered=tasks.filter(t=>{
+    if(fp&&t.party!==fp)return false;
+    if(fa&&t.article!==fa)return false;
+    if(fw&&t.subwork!==fw)return false;
+    if(fs&&t.status!==fs)return false;
+    return true;
+  });
+  const tb=document.getElementById('task-tbody');
+  if(!filtered.length){tb.innerHTML='<tr><td colspan="7"><div class="empty">No tasks found.</div></td></tr>';return;}
+  tb.innerHTML=filtered.map((t,i)=>{
+    const ri=tasks.indexOf(t);
+    return`<tr id="row-${ri}">
+      <td>${t.party}</td>
+      <td>${t.subwork}</td>
+      <td>${t.article}</td>
+      <td id="td-status-${ri}">${statusBadge(t.status)}</td>
+      <td id="td-remarks-${ri}" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.remarks||'—'}</td>
+      <td>${t.date}</td>
+      <td>
+        <button class="btn btn-sm" onclick="startEdit(${ri})">Edit</button>
+      </td>
+    </tr>
+    <tr id="edit-row-${ri}" style="display:none;background:var(--color-background-secondary)">
+      <td colspan="7" style="padding:10px 14px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <select id="edit-status-${ri}">
+            <option ${t.status==='Pending'?'selected':''}>Pending</option>
+            <option ${t.status==='In Progress'?'selected':''}>In Progress</option>
+            <option ${t.status==='Completed'?'selected':''}>Completed</option>
+          </select>
+          <input type="text" id="edit-remarks-${ri}" value="${t.remarks||''}" placeholder="Remarks" style="flex:1;min-width:160px">
+          <button class="btn btn-primary btn-sm" onclick="saveEdit(${ri})">Save</button>
+          <button class="btn btn-sm" onclick="cancelEdit(${ri})">Cancel</button>
+        </div>
+      </td>
+    </tr>`}).join('');
+}
+
+function startEdit(i){
+  if(editingRow!==null)cancelEdit(editingRow);
+  editingRow=i;
+  document.getElementById('edit-row-'+i).style.display='';
+}
+
+function cancelEdit(i){
+  document.getElementById('edit-row-'+i).style.display='none';
+  editingRow=null;
+}
+
+function saveEdit(i){
+  tasks[i].status=document.getElementById('edit-status-'+i).value;
+  tasks[i].remarks=document.getElementById('edit-remarks-'+i).value.trim();
+  editingRow=null;
+  renderTasks();
+  updateDash();
+}
+
+function updateDash(){
+  document.getElementById('s-total').textContent=tasks.length;
+  document.getElementById('s-pending').textContent=tasks.filter(t=>t.status==='Pending').length;
+  document.getElementById('s-inprog').textContent=tasks.filter(t=>t.status==='In Progress').length;
+  document.getElementById('s-done').textContent=tasks.filter(t=>t.status==='Completed').length;
+  document.getElementById('s-parties').textContent=parties.length;
+  document.getElementById('s-articles').textContent=articles.length;
+  const rec=document.getElementById('recent-tasks');
+  const recent=tasks.slice(-5).reverse();
+  if(!recent.length){rec.innerHTML='<div class="empty">No tasks yet.</div>';return;}
+  rec.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr><th style="text-align:left;padding:6px 0;font-size:11px;color:var(--color-text-secondary);font-weight:500;border-bottom:0.5px solid var(--color-border-tertiary)">Party</th><th style="text-align:left;padding:6px 0;font-size:11px;color:var(--color-text-secondary);font-weight:500;border-bottom:0.5px solid var(--color-border-tertiary)">Sub work</th><th style="text-align:left;padding:6px 0;font-size:11px;color:var(--color-text-secondary);font-weight:500;border-bottom:0.5px solid var(--color-border-tertiary)">Article</th><th style="text-align:left;padding:6px 0;font-size:11px;color:var(--color-text-secondary);font-weight:500;border-bottom:0.5px solid var(--color-border-tertiary)">Status</th></tr></thead>
+    <tbody>${recent.map(t=>`<tr><td style="padding:7px 0;border-bottom:0.5px solid var(--color-border-tertiary)">${t.party}</td><td style="padding:7px 0;border-bottom:0.5px solid var(--color-border-tertiary)">${t.subwork}</td><td style="padding:7px 0;border-bottom:0.5px solid var(--color-border-tertiary)">${t.article}</td><td style="padding:7px 0;border-bottom:0.5px solid var(--color-border-tertiary)">${statusBadge(t.status)}</td></tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function showMsg(id){
+  const el=document.getElementById(id);
+  el.style.display='block';
+  setTimeout(()=>el.style.display='none',2500);
+}
+
+let dark=false;
+function toggleTheme(){
+  dark=!dark;
+  document.documentElement.style.colorScheme=dark?'dark':'light';
+}
+
+updateDash();
+</script>
