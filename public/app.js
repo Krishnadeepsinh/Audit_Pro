@@ -101,7 +101,7 @@ function updateUserProfile(name, role) {
     if (roleEl) {
         if (role === 'admin') roleEl.innerText = 'Firm Admin';
         else if (role === 'viewer') roleEl.innerText = 'Guest Viewer';
-        else roleEl.innerText = 'Article Assistant';
+        else roleEl.innerText = 'Article';
     }
     if (avatarEl) {
         avatarEl.innerText = (name || 'A').charAt(0).toUpperCase();
@@ -248,7 +248,7 @@ function renderArticlesGrid(articles) {
             </button>
             <div class="m-avatar">${escapeHTML(art.name).charAt(0)}</div>
             <h3 class="outfit">${escapeHTML(art.name)}</h3>
-            <p style="color: var(--text-mute); font-size: 13px">Assistant</p>
+            <p style="color: var(--text-mute); font-size: 13px">Article</p>
             <div style="font-size: 12px; margin-top: 10px; background: rgba(255,255,255,0.05); padding: 6px; border-radius: 6px;">
                  <span style="color: var(--text-dim)">Pass:</span> ${escapeHTML(art.password || 'N/A')}
                  <button onclick="changeArticlePassword(${art.id})" style="background: none; border: none; color: var(--primary); font-size: 11px; margin-left: 8px; cursor: pointer;">Edit</button>
@@ -293,7 +293,7 @@ async function addArticle() {
 
     const name = await showInputModal(
         'Add Team Member',
-        'Enroll a new article assistant or staff member to the firm.',
+        'Enroll a new article or staff member to the firm.',
         'Staff Username/Name',
         'e.g. Rahul Sharma'
     );

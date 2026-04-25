@@ -66,7 +66,7 @@
                     </button>
                     <button onclick="showPage('articles')" class="nav-btn" id="nav-articles">
                         <i data-lucide="users"></i>
-                        <span>Articles / Assistants</span>
+                        <span>Articles</span>
                     </button>
                 </div>
             </nav>
@@ -318,7 +318,7 @@
                         <div style="flex: 1; margin: 0 40px;">
                             <input type="text" id="staff-search" oninput="applyFilters('staff')" class="premium-input" style="padding: 10px 20px" placeholder="🔍 Search staff...">
                         </div>
-                        <button onclick="addArticle()" class="primary-btn"><i data-lucide="plus"></i> <span>Add Assistant</span></button>
+                        <button onclick="addArticle()" class="primary-btn"><i data-lucide="plus"></i> <span>Add Article</span></button>
                     </div>
                     <div class="management-grid" id="articles-grid"></div>
                 </div>
@@ -391,7 +391,7 @@
     <div id="password-modal" class="modal-overlay hidden">
         <div class="glass-card modal-dialog" style="text-align: left">
             <h3 class="outfit">Update Credentials</h3>
-            <p style="margin-bottom: 24px; color: var(--text-dim); font-size: 14px;">Define a new secure password for this assistant.</p>
+            <p style="margin-bottom: 24px; color: var(--text-dim); font-size: 14px;">Define a new secure password for this article.</p>
             
             <div class="input-group">
                 <label>New Password</label>
