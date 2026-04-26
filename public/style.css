@@ -205,6 +205,8 @@ h1, h2, h3, h4, .outfit {
 .user-info h4 { font-size: 14px; margin: 0; }
 .user-info p { font-size: 11px; color: var(--text-mute); margin: 0; font-weight: 500; }
 
+.mobile-profile { display: none !important; }
+
 /* --- Main Content --- */
 
 main {
@@ -621,6 +623,8 @@ tr:hover td {
         background: var(--bg-main);
         z-index: 800;
     }
+    
+    .mobile-profile { display: flex !important; }
     
     #content-area {
         padding: 20px 16px 100px; /* Space for bottom nav */

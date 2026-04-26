@@ -80,10 +80,10 @@
 
             <div class="sidebar-footer">
                 <div class="user-profile">
-                    <div class="user-avatar" id="user-display-avatar">CA</div>
+                    <div class="user-avatar user-display-avatar">CA</div>
                     <div class="user-info">
-                        <h4 class="outfit" id="user-display-name">Brijeshwariba</h4>
-                        <p id="user-display-role">Firm Admin</p>
+                        <h4 class="outfit user-display-name">Brijeshwariba</h4>
+                        <p class="user-display-role">Firm Admin</p>
                     </div>
                 </div>
             </div>
@@ -98,6 +98,15 @@
                     <h1 id="page-header-title">Dashboard Overview</h1>
                 </div>
                 <div class="header-actions">
+                    <!-- Mobile User Profile -->
+                    <div class="user-profile mobile-profile" style="padding: 6px 12px; border: 1px solid var(--border-main); background: var(--bg-main); margin-right: 4px;">
+                        <div class="user-avatar user-display-avatar" style="width: 30px; height: 30px; font-size: 12px; border-radius: 8px;">CA</div>
+                        <div class="user-info mobile-user-info">
+                            <h4 class="outfit user-display-name" style="font-size: 13px;">Brijeshwariba</h4>
+                            <p class="user-display-role" style="font-size: 10px;">Firm Admin</p>
+                        </div>
+                    </div>
+                    
                     <button onclick="toggleTheme()" class="theme-toggle" title="Toggle Theme">
                         <i data-lucide="moon" id="theme-icon"></i>
                     </button>

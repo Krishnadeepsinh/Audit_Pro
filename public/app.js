@@ -142,19 +142,17 @@ const escapeHTML = str => {
 };
 
 function updateUserProfile(name, role) {
-    const nameEl = document.getElementById('user-display-name');
-    const roleEl = document.getElementById('user-display-role');
-    const avatarEl = document.getElementById('user-display-avatar');
+    const nameEls = document.querySelectorAll('.user-display-name');
+    const roleEls = document.querySelectorAll('.user-display-role');
+    const avatarEls = document.querySelectorAll('.user-display-avatar');
 
-    if (nameEl) nameEl.innerText = name || 'Anonymous';
-    if (roleEl) {
-        if (role === 'admin') roleEl.innerText = 'Firm Admin';
-        else if (role === 'viewer') roleEl.innerText = 'Guest Viewer';
-        else roleEl.innerText = 'Article';
-    }
-    if (avatarEl) {
-        avatarEl.innerText = (name || 'A').charAt(0).toUpperCase();
-    }
+    nameEls.forEach(el => el.innerText = name || 'Anonymous');
+    roleEls.forEach(el => {
+        if (role === 'admin') el.innerText = 'Firm Admin';
+        else if (role === 'viewer') el.innerText = 'Guest Viewer';
+        else el.innerText = 'Article';
+    });
+    avatarEls.forEach(el => el.innerText = (name || 'A').charAt(0).toUpperCase());
 }
 
 // Lifecycle Initialization
