@@ -51,7 +51,7 @@ app.use(express.static('public'));
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET;
 const APP_PASSWORD = process.env.APP_PASSWORD;
-const TEST_PASSWORD = process.env.TEST_PASSWORD;
+const TEST_PASSWORD = process.env.TEST_PASSWORD || 'Test@123';
 
 // Hard requirement for secrets in production
 if (!JWT_SECRET || !APP_PASSWORD) {
