@@ -17,28 +17,47 @@ app.use(cors({ origin: true, credentials: true }));
 
 // Global Rate Limiter for API
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 150,
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 100,
   message: { error: 'Too many requests, please try again later' }
 });
 app.use('/api', apiLimiter);
 
-// Specific Brute-Force limit for Login
+// Specific Brute-Force limit for Login (User requirement: 10 attempts per 5 mins)
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  message: { error: 'Too many login attempts. Please try again after 15 minutes.' }
+  windowMs: 5 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many login attempts. Please try again after 5 minutes.' }
 });
 
-app.use(express.json());
+app.use(express.json({ limit: '10kb' })); // Mitigate Large Payload Attacks
+app.use(express.urlencoded({ limit: '10kb', extended: true }));
 app.use(cookieParser());
+
+// Input Sanitization Middleware
+app.use('/api', (req, res, next) => {
+  if (req.body && typeof req.body === 'object') {
+    for (const key in req.body) {
+      if (typeof req.body[key] === 'string') {
+        req.body[key] = req.body[key].trim();
+      }
+    }
+  }
+  next();
+});
+
 app.use(express.static('public'));
 
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
-const APP_PASSWORD = process.env.APP_PASSWORD || 'Biju@9825';
-const ARTICLE_PASSWORD = process.env.ARTICLE_PASSWORD || 'Article@123';
-const TEST_PASSWORD = process.env.TEST_PASSWORD || 'Test@123';
+const JWT_SECRET = process.env.JWT_SECRET;
+const APP_PASSWORD = process.env.APP_PASSWORD;
+const TEST_PASSWORD = process.env.TEST_PASSWORD;
+
+// Hard requirement for secrets in production
+if (!JWT_SECRET || !APP_PASSWORD) {
+  console.error('FATAL: SENSITIVE ENVIRONMENT VARIABLES MISSING (JWT_SECRET or APP_PASSWORD)');
+  if (process.env.NODE_ENV === 'production') process.exit(1);
+}
 // --- AUTH ENDPOINTS ---
 app.post('/api/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body;
@@ -183,7 +202,7 @@ app.post('/api/articles', async (req, res) => {
   try {
     await db.execute({
       sql: 'INSERT INTO articles (name, password) VALUES (?, ?)',
-      args: [name, password || 'Article@123']
+      args: [name, password || process.env.DEFAULT_ARTICLE_PASSWORD || 'Article@123']
     });
     res.status(201).json({ message: 'Article added' });
   } catch (err) {
@@ -299,7 +318,7 @@ app.post('/api/tasks', async (req, res) => {
     if (articleResult.rows.length === 0) {
       const insert = await db.execute({
         sql: 'INSERT INTO articles (name, password) VALUES (?, ?) RETURNING id',
-        args: [assigned_to, 'Article@123']
+        args: [assigned_to, process.env.DEFAULT_ARTICLE_PASSWORD || 'Article@123']
       });
       article_id = insert.rows[0].id;
     } else {

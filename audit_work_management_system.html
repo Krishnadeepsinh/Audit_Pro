@@ -56,6 +56,21 @@ tr:hover td{background:var(--color-background-secondary)}
 .pill-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);font-size:13px}
 .empty{text-align:center;padding:40px;color:var(--color-text-tertiary);font-size:13px}
 .success-msg{padding:8px 12px;background:#EAF3DE;color:#3B6D11;border-radius:var(--border-radius-md);font-size:12px;margin-bottom:12px;display:none}
+@media (max-width: 768px) {
+  .app { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 0.5px solid var(--color-border-tertiary); display: block; }
+  .logo { display: flex; justify-content: space-between; align-items: center; }
+  .nav { display: flex; overflow-x: auto; padding: 8px; gap: 8px; flex-direction: row; }
+  .nav-item { width: auto; white-space: nowrap; margin-bottom: 0; padding: 8px 12px; }
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .filter-bar { grid-template-columns: 1fr 1fr; }
+  .table-wrap { overflow-x: auto; }
+}
+@media (max-width: 480px) {
+  .stat-grid { grid-template-columns: 1fr; }
+  .filter-bar { grid-template-columns: 1fr; }
+}
 </style>
 
 <div class="app">
